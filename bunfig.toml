@@ -1,0 +1,8 @@
+[install]
+# Configure package installation
+
+[install.scopes]
+# Configure scoped registries
+
+[run]
+# Scripts to run before/after commands

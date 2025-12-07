@@ -1,2 +1,15 @@
 /.local/
 CLAUDE.md
+
+# Dependencies
+node_modules
+
+# Build output
+dist
+*.local
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
