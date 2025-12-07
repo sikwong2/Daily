@@ -1,8 +1,16 @@
-interface CalendarViewProps {
-  currentDate?: Date
+interface Habit {
+  name: string
+  description: string
+  createdDate: number
+  completedDates: number[]
 }
 
-function CalendarView({ currentDate = new Date() }: CalendarViewProps) {
+interface CalendarViewProps {
+  currentDate?: Date
+  habits: Habit[]
+}
+
+function CalendarView({ currentDate = new Date(), habits }: CalendarViewProps) {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
 
@@ -36,6 +44,23 @@ function CalendarView({ currentDate = new Date() }: CalendarViewProps) {
     days.push(day)
   }
 
+  // Helper function to get habits completed on a specific day
+  const getHabitsForDay = (day: number) => {
+    const dayDate = new Date(year, month, day)
+    // Set to start of day for comparison
+    dayDate.setHours(0, 0, 0, 0)
+    const dayTimestamp = dayDate.getTime()
+
+    // Check each habit to see if it was completed on this day
+    return habits.filter(habit => {
+      return habit.completedDates.some(timestamp => {
+        const completedDate = new Date(timestamp)
+        completedDate.setHours(0, 0, 0, 0)
+        return completedDate.getTime() === dayTimestamp
+      })
+    })
+  }
+
   return (
     <div className="w-full">
       <h2 className="text-2xl font-semibold mb-6 text-center">
@@ -53,19 +78,36 @@ function CalendarView({ currentDate = new Date() }: CalendarViewProps) {
 
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-2">
-        {days.map((day, index) => (
-          <div
-            key={index}
-            className={`
-              aspect-square flex items-center justify-center rounded-lg border
-              ${day ? 'border-gray-200 hover:border-gray-400 cursor-pointer' : 'border-transparent'}
-            `}
-          >
-            {day && (
-              <span className="text-sm">{day}</span>
-            )}
-          </div>
-        ))}
+        {days.map((day, index) => {
+          const completedHabits = day ? getHabitsForDay(day) : []
+
+          return (
+            <div
+              key={index}
+              className={`
+                aspect-square flex flex-col p-2 rounded-lg border
+                ${day ? 'border-gray-200 hover:border-gray-400 cursor-pointer' : 'border-transparent'}
+              `}
+            >
+              {day && (
+                <>
+                  <span className="text-sm font-semibold mb-1">{day}</span>
+                  <div className="flex flex-col gap-0.5 text-xs overflow-hidden">
+                    {completedHabits.map((habit, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded truncate"
+                        title={habit.name}
+                      >
+                        {habit.name}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

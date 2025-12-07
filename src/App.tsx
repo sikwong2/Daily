@@ -31,7 +31,7 @@ function App() {
 
       {/* Calendar - 2/3 width */}
       <div className="w-2/3 p-8">
-        <CalendarView />
+        <CalendarView habits={habits} />
       </div>
     </div>
   )
