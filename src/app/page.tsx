@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import HabitCard from '@/components/HabitCard'
 import CalendarView from '@/components/CalendarView'
+import TopBar from '@/components/TopBar'
 import habitsData from '@/data/habits.json'
 
 interface Habit {
@@ -42,32 +43,35 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-background">
-      {/* Habit List - 1/3 width */}
-      <div className="w-1/3 border-r border-border p-4 overflow-y-auto bg-muted/30">
-        <h2 className="text-xl font-semibold mb-4 text-center">Habits</h2>
-        <div className="max-w-md mx-auto">
-          {habits.map((habit, index) => (
-            <HabitCard
-              key={index}
-              name={habit.name}
-              description={habit.description}
-              completedDatesCount={habit.completedDates.length}
-            />
-          ))}
+    <div className="flex flex-col h-screen w-full bg-background">
+      <TopBar />
+      <div className="flex flex-1 overflow-hidden">
+        {/* Habit List - 1/3 width */}
+        <div className="w-1/3 border-r border-border p-4 overflow-y-auto bg-muted/30">
+          <h2 className="text-xl font-semibold mb-4 text-center">Habits</h2>
+          <div className="max-w-md mx-auto">
+            {habits.map((habit, index) => (
+              <HabitCard
+                key={index}
+                name={habit.name}
+                description={habit.description}
+                completedDatesCount={habit.completedDates.length}
+              />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Calendar - 2/3 width */}
-      <div className="w-2/3 p-8">
-        {currentDate && (
-          <CalendarView
-            habits={habits}
-            currentDate={currentDate}
-            onPreviousMonth={goToPreviousMonth}
-            onNextMonth={goToNextMonth}
-          />
-        )}
+        {/* Calendar - 2/3 width */}
+        <div className="w-2/3 p-8">
+          {currentDate && (
+            <CalendarView
+              habits={habits}
+              currentDate={currentDate}
+              onPreviousMonth={goToPreviousMonth}
+              onNextMonth={goToNextMonth}
+            />
+          )}
+        </div>
       </div>
     </div>
   )
