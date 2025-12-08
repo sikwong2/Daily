@@ -1,5 +1,8 @@
 'use client'
 
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+
 interface Habit {
   name: string
   description: string
@@ -68,21 +71,25 @@ function CalendarView({ currentDate, habits, onPreviousMonth, onNextMonth }: Cal
   return (
     <div className="w-full">
       <div className="flex items-center justify-evenly gap-4 mb-6">
-        <button
+        <Button
           onClick={onPreviousMonth}
-          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+          variant="outline"
+          size="lg"
         >
-          ← Previous
-        </button>
+          <ChevronLeft className="h-4 w-4" />
+          Previous
+        </Button>
         <h2 className="text-2xl font-semibold">
           {monthNames[month]} {year}
         </h2>
-        <button
+        <Button
           onClick={onNextMonth}
-          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+          variant="outline"
+          size="lg"
         >
-          Next →
-        </button>
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Day names header */}
@@ -103,8 +110,8 @@ function CalendarView({ currentDate, habits, onPreviousMonth, onNextMonth }: Cal
             <div
               key={index}
               className={`
-                aspect-square flex flex-col p-2 rounded-lg border
-                ${day ? 'border-gray-200 hover:border-gray-400 cursor-pointer' : 'border-transparent'}
+                aspect-square flex flex-col p-2 rounded-lg border transition-colors
+                ${day ? 'border-border hover:border-primary/50 cursor-pointer bg-card' : 'border-transparent'}
               `}
             >
               {day && (
@@ -114,7 +121,7 @@ function CalendarView({ currentDate, habits, onPreviousMonth, onNextMonth }: Cal
                     {completedHabits.map((habit, idx) => (
                       <div
                         key={idx}
-                        className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded truncate"
+                        className="bg-primary/10 text-primary px-1 py-0.5 rounded truncate"
                         title={habit.name}
                       >
                         {habit.name}

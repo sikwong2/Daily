@@ -42,9 +42,9 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full bg-background">
       {/* Habit List - 1/3 width */}
-      <div className="w-1/3 border-r border-gray-200 p-4 overflow-y-auto">
+      <div className="w-1/3 border-r border-border p-4 overflow-y-auto bg-muted/30">
         <h2 className="text-xl font-semibold mb-4 text-center">Habits</h2>
         <div className="max-w-md mx-auto">
           {habits.map((habit, index) => (

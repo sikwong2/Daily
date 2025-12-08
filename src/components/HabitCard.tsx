@@ -1,3 +1,5 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+
 interface HabitCardProps {
   name: string
   description: string
@@ -6,13 +8,17 @@ interface HabitCardProps {
 
 function HabitCard({ name, description, completedDatesCount }: HabitCardProps) {
   return (
-    <div className="border border-gray-200 rounded-lg p-4 mb-3 hover:shadow-md transition-shadow">
-      <h3 className="font-semibold text-lg mb-2">{name}</h3>
-      <p className="text-gray-600 text-sm mb-3">{description}</p>
-      <div className="text-sm text-gray-700">
-        <span className="font-medium">{completedDatesCount}</span> days completed
-      </div>
-    </div>
+    <Card className="mb-3 hover:shadow-md transition-shadow">
+      <CardHeader>
+        <CardTitle>{name}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{completedDatesCount}</span> days completed
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
