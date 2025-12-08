@@ -4,11 +4,15 @@ interface HabitCardProps {
   name: string
   description: string
   completedDatesCount: number
+  onClick?: () => void
 }
 
-function HabitCard({ name, description, completedDatesCount }: HabitCardProps) {
+function HabitCard({ name, description, completedDatesCount, onClick }: HabitCardProps) {
   return (
-    <Card className="mb-3 hover:shadow-md transition-shadow">
+    <Card
+      className="mb-3 hover:shadow-md transition-shadow cursor-pointer"
+      onClick={onClick}
+    >
       <CardHeader>
         <CardTitle>{name}</CardTitle>
         <CardDescription>{description}</CardDescription>

@@ -59,6 +59,24 @@ export default function Home() {
     }
   }
 
+  const handleHabitClick = async (habitName: string) => {
+    // Get current date at start of day (midnight) in epoch milliseconds
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+
+    // Toggle the current date for this habit
+    const response = await fetch('/api/habits', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ habitName, date: todayStart })
+    })
+
+    if (response.ok) {
+      // Reload the page to reflect the change
+      window.location.reload()
+    }
+  }
+
   const goToPreviousMonth = () => {
     setCurrentDate(prevDate => {
       if (!prevDate) return null
@@ -133,6 +151,7 @@ export default function Home() {
                 name={habit.name}
                 description={habit.description}
                 completedDatesCount={habit.completedDates.length}
+                onClick={() => handleHabitClick(habit.name)}
               />
             ))}
           </div>
