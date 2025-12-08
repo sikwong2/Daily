@@ -8,9 +8,11 @@ interface Habit {
 interface CalendarViewProps {
   currentDate?: Date
   habits: Habit[]
+  onPreviousMonth: () => void
+  onNextMonth: () => void
 }
 
-function CalendarView({ currentDate = new Date(), habits }: CalendarViewProps) {
+function CalendarView({ currentDate = new Date(), habits, onPreviousMonth, onNextMonth }: CalendarViewProps) {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
 
@@ -63,9 +65,23 @@ function CalendarView({ currentDate = new Date(), habits }: CalendarViewProps) {
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-semibold mb-6 text-center">
-        {monthNames[month]} {year}
-      </h2>
+      <div className="flex items-center justify-evenly gap-4 mb-6">
+        <button
+          onClick={onPreviousMonth}
+          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+        >
+          ← Previous
+        </button>
+        <h2 className="text-2xl font-semibold">
+          {monthNames[month]} {year}
+        </h2>
+        <button
+          onClick={onNextMonth}
+          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+        >
+          Next →
+        </button>
+      </div>
 
       {/* Day names header */}
       <div className="grid grid-cols-7 gap-2 mb-2">

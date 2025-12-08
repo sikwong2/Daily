@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import HabitCard from './components/HabitCard'
 import CalendarView from './components/CalendarView'
 import habitsData from '../data/habits.json'
@@ -11,6 +12,23 @@ interface Habit {
 
 function App() {
   const habits: Habit[] = habitsData.habits
+  const [currentDate, setCurrentDate] = useState(new Date())
+
+  const goToPreviousMonth = () => {
+    setCurrentDate(prevDate => {
+      const newDate = new Date(prevDate)
+      newDate.setMonth(newDate.getMonth() - 1)
+      return newDate
+    })
+  }
+
+  const goToNextMonth = () => {
+    setCurrentDate(prevDate => {
+      const newDate = new Date(prevDate)
+      newDate.setMonth(newDate.getMonth() + 1)
+      return newDate
+    })
+  }
 
   return (
     <div className="flex h-screen w-full">
@@ -31,7 +49,12 @@ function App() {
 
       {/* Calendar - 2/3 width */}
       <div className="w-2/3 p-8">
-        <CalendarView habits={habits} />
+        <CalendarView
+          habits={habits}
+          currentDate={currentDate}
+          onPreviousMonth={goToPreviousMonth}
+          onNextMonth={goToNextMonth}
+        />
       </div>
     </div>
   )
