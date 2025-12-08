@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus } from 'lucide-react'
 import habitsData from '@/data/habits.json'
 
 interface Habit {
   name: string
   description: string
+  color: string
   createdDate: number
   completedDates: number[]
 }
@@ -25,6 +27,7 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState<Date | null>(null)
   const [newHabitName, setNewHabitName] = useState('')
   const [newHabitDescription, setNewHabitDescription] = useState('')
+  const [newHabitColor, setNewHabitColor] = useState('blue')
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
 
   useEffect(() => {
@@ -39,6 +42,7 @@ export default function Home() {
     const newHabit = {
       name: newHabitName,
       description: newHabitDescription,
+      color: newHabitColor,
       createdDate: Date.now(),
       completedDates: []
     }
@@ -56,6 +60,7 @@ export default function Home() {
       // Reset form and close popover
       setNewHabitName('')
       setNewHabitDescription('')
+      setNewHabitColor('blue')
       setIsPopoverOpen(false)
     }
   }
@@ -162,6 +167,24 @@ export default function Home() {
                         onChange={(e) => setNewHabitDescription(e.target.value)}
                       />
                     </div>
+                    <div className="grid gap-1">
+                      <Label htmlFor="color">Color</Label>
+                      <Select value={newHabitColor} onValueChange={setNewHabitColor}>
+                        <SelectTrigger id="color">
+                          <SelectValue placeholder="Select a color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="red">Red</SelectItem>
+                          <SelectItem value="blue">Blue</SelectItem>
+                          <SelectItem value="green">Green</SelectItem>
+                          <SelectItem value="yellow">Yellow</SelectItem>
+                          <SelectItem value="purple">Purple</SelectItem>
+                          <SelectItem value="pink">Pink</SelectItem>
+                          <SelectItem value="orange">Orange</SelectItem>
+                          <SelectItem value="cyan">Cyan</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Button onClick={handleCreateHabit} className="mt-2">
                       Create Habit
                     </Button>
@@ -176,6 +199,7 @@ export default function Home() {
                 key={index}
                 name={habit.name}
                 description={habit.description}
+                color={habit.color}
                 completedDatesCount={habit.completedDates.length}
                 onClick={() => handleHabitClick(habit.name)}
               />

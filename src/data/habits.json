@@ -3,6 +3,7 @@
     {
       "name": "Morning Exercise",
       "description": "30 minutes of exercise each morning",
+      "color": "blue",
       "createdDate": 1735084800000,
       "completedDates": [
         1735689600000,
@@ -251,6 +252,7 @@
         1765065600000,
         1765094400000,
         1765152000000,
+        1765180800000,
         1765324800000,
         1765497600000,
         1765584000000,
@@ -272,6 +274,7 @@
     {
       "name": "Read 20 Pages",
       "description": "Read at least 20 pages of any book",
+      "color": "green",
       "createdDate": 1735084800000,
       "completedDates": [
         1735776000000,
@@ -487,6 +490,7 @@
     {
       "name": "Drink 8 Glasses of Water",
       "description": "Stay hydrated by drinking at least 8 glasses of water daily",
+      "color": "cyan",
       "createdDate": 1735171200000,
       "completedDates": [
         1735689600000,
@@ -842,7 +846,15 @@
     {
       "name": "Test",
       "description": "Test",
+      "color": "purple",
       "createdDate": 1765172515480,
+      "completedDates": []
+    },
+    {
+      "name": "Aim train",
+      "description": "aimlabs",
+      "color": "red",
+      "createdDate": 1765177581737,
       "completedDates": []
     }
   ]

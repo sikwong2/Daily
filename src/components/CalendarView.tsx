@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 interface Habit {
   name: string
   description: string
+  color: string
   createdDate: number
   completedDates: number[]
 }
@@ -15,6 +16,17 @@ interface CalendarViewProps {
   habits: Habit[]
   onPreviousMonth: () => void
   onNextMonth: () => void
+}
+
+const colorClasses: Record<string, string> = {
+  red: 'bg-red-100 dark:bg-red-900/30',
+  blue: 'bg-blue-100 dark:bg-blue-900/30',
+  green: 'bg-green-100 dark:bg-green-900/30',
+  yellow: 'bg-yellow-100 dark:bg-yellow-900/30',
+  purple: 'bg-purple-100 dark:bg-purple-900/30',
+  pink: 'bg-pink-100 dark:bg-pink-900/30',
+  orange: 'bg-orange-100 dark:bg-orange-900/30',
+  cyan: 'bg-cyan-100 dark:bg-cyan-900/30',
 }
 
 function CalendarView({ currentDate, habits, onPreviousMonth, onNextMonth }: CalendarViewProps) {
@@ -118,15 +130,18 @@ function CalendarView({ currentDate, habits, onPreviousMonth, onNextMonth }: Cal
                 <>
                   <span className="text-sm font-semibold mb-1">{day}</span>
                   <div className="flex flex-col gap-0.5 text-xs overflow-hidden">
-                    {completedHabits.map((habit, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-primary/10 text-primary px-1 py-0.5 rounded truncate"
-                        title={habit.name}
-                      >
-                        {habit.name}
-                      </div>
-                    ))}
+                    {completedHabits.map((habit, idx) => {
+                      const colorClass = colorClasses[habit.color] || colorClasses.blue
+                      return (
+                        <div
+                          key={idx}
+                          className={`${colorClass} px-1 py-0.5 rounded truncate`}
+                          title={habit.name}
+                        >
+                          {habit.name}
+                        </div>
+                      )
+                    })}
                   </div>
                 </>
               )}
