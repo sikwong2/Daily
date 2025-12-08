@@ -19,7 +19,8 @@ interface Habit {
 }
 
 export default function Home() {
-  const habits: Habit[] = habitsData.habits
+  // Manage habits in state for reactive updates
+  const [habits, setHabits] = useState<Habit[]>(habitsData.habits)
   // Initialize with null, then set to current date after mount to avoid hydration issues
   const [currentDate, setCurrentDate] = useState<Date | null>(null)
   const [newHabitName, setNewHabitName] = useState('')
@@ -50,12 +51,12 @@ export default function Home() {
     })
 
     if (response.ok) {
+      // Update state instead of reloading
+      setHabits(prev => [...prev, newHabit])
       // Reset form and close popover
       setNewHabitName('')
       setNewHabitDescription('')
       setIsPopoverOpen(false)
-      // Reload the page to show the new habit
-      window.location.reload()
     }
   }
 
@@ -64,16 +65,41 @@ export default function Home() {
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
 
-    // Toggle the current date for this habit
+    // Optimistically update state first for instant UI feedback
+    setHabits(prev => prev.map(habit => {
+      if (habit.name === habitName) {
+        const isCompleted = habit.completedDates.includes(todayStart)
+        return {
+          ...habit,
+          completedDates: isCompleted
+            ? habit.completedDates.filter(date => date !== todayStart)
+            : [...habit.completedDates, todayStart]
+        }
+      }
+      return habit
+    }))
+
+    // Then sync with backend
     const response = await fetch('/api/habits', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ habitName, date: todayStart })
     })
 
-    if (response.ok) {
-      // Reload the page to reflect the change
-      window.location.reload()
+    // If API call fails, revert the optimistic update
+    if (!response.ok) {
+      setHabits(prev => prev.map(habit => {
+        if (habit.name === habitName) {
+          const isCompleted = habit.completedDates.includes(todayStart)
+          return {
+            ...habit,
+            completedDates: isCompleted
+              ? habit.completedDates.filter(date => date !== todayStart)
+              : [...habit.completedDates, todayStart]
+          }
+        }
+        return habit
+      }))
     }
   }
 
