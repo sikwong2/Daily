@@ -843,22 +843,6 @@
         1767052800000,
         1767139200000
       ]
-    },
-    {
-      "name": "Test",
-      "description": "Test",
-      "color": "purple",
-      "createdDate": 1765172515480,
-      "completedDates": [
-        1765180800000
-      ]
-    },
-    {
-      "name": "Aim train",
-      "description": "aimlabs",
-      "color": "red",
-      "createdDate": 1765177581737,
-      "completedDates": []
     }
   ]
 }

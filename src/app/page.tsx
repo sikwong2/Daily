@@ -108,6 +108,26 @@ export default function Home() {
     }
   }
 
+  const handleDeleteHabit = async (habitName: string) => {
+    // Store the current habits for potential rollback
+    const previousHabits = habits
+
+    // Optimistically remove the habit from state
+    setHabits(prev => prev.filter(habit => habit.name !== habitName))
+
+    // Sync with backend
+    const response = await fetch('/api/habits', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ habitName })
+    })
+
+    // If API call fails, revert the optimistic update
+    if (!response.ok) {
+      setHabits(previousHabits)
+    }
+  }
+
   const goToPreviousMonth = () => {
     setCurrentDate(prevDate => {
       if (!prevDate) return null
@@ -202,6 +222,7 @@ export default function Home() {
                 color={habit.color}
                 completedDatesCount={habit.completedDates.length}
                 onClick={() => handleHabitClick(habit.name)}
+                onDelete={() => handleDeleteHabit(habit.name)}
               />
             ))}
           </div>

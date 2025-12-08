@@ -60,3 +60,31 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: false, error: 'Failed to update habit' }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { habitName } = await request.json()
+
+    // Read the current habits.json file
+    const filePath = path.join(process.cwd(), 'src/data/habits.json')
+    const fileContents = await fs.readFile(filePath, 'utf8')
+    const data = JSON.parse(fileContents)
+
+    // Find the habit index by name
+    const habitIndex = data.habits.findIndex((h: any) => h.name === habitName)
+    if (habitIndex === -1) {
+      return NextResponse.json({ success: false, error: 'Habit not found' }, { status: 404 })
+    }
+
+    // Remove the habit
+    data.habits.splice(habitIndex, 1)
+
+    // Write back to the file
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2))
+
+    return NextResponse.json({ success: true }, { status: 200 })
+  } catch (error) {
+    console.error('Error deleting habit:', error)
+    return NextResponse.json({ success: false, error: 'Failed to delete habit' }, { status: 500 })
+  }
+}

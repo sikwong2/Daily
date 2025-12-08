@@ -1,4 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { X } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface HabitCardProps {
   name: string
@@ -6,6 +8,7 @@ interface HabitCardProps {
   color: string
   completedDatesCount: number
   onClick?: () => void
+  onDelete?: () => void
 }
 
 const colorClasses: Record<string, string> = {
@@ -19,16 +22,16 @@ const colorClasses: Record<string, string> = {
   cyan: 'bg-cyan-100 dark:bg-cyan-900/30 border-l-4 border-l-cyan-500',
 }
 
-function HabitCard({ name, description, color, completedDatesCount, onClick }: HabitCardProps) {
+function HabitCard({ name, description, color, completedDatesCount, onClick, onDelete }: HabitCardProps) {
   const colorClass = colorClasses[color] || colorClasses.blue
 
   return (
     <Card
-      className={`mb-3 hover:shadow-md transition-shadow cursor-pointer ${colorClass}`}
+      className={`mb-3 hover:shadow-md transition-shadow cursor-pointer ${colorClass} relative`}
       onClick={onClick}
     >
       <CardHeader>
-        <CardTitle>{name}</CardTitle>
+        <CardTitle className="pr-8">{name}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -36,6 +39,19 @@ function HabitCard({ name, description, color, completedDatesCount, onClick }: H
           <span className="font-medium text-foreground">{completedDatesCount}</span> days completed
         </div>
       </CardContent>
+      {onDelete && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 h-6 w-6 hover:bg-destructive/10"
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete()
+          }}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
     </Card>
   )
 }
