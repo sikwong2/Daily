@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const createUserSchema = z.object({
-  email: z.string().email('Invalid email format'),
+  email: z.email('Invalid email format'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
