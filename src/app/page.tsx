@@ -22,7 +22,8 @@ interface Habit {
 
 export default function Home() {
   // Manage habits in state for reactive updates
-  const [habits, setHabits] = useState<Habit[]>(habitsData.habits)
+  const [habits, setHabits] = useState<Habit[]>([])
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   // Initialize with null, then set to current date after mount to avoid hydration issues
   const [currentDate, setCurrentDate] = useState<Date | null>(null)
   const [newHabitName, setNewHabitName] = useState('')
@@ -34,7 +35,29 @@ export default function Home() {
     // Set the current date only on the client after hydration
     const now = new Date()
     setCurrentDate(new Date(now.getFullYear(), now.getMonth(), 1))
+    checkAuthStatus()
   }, [])
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('/api/auth/check')
+      const data = await response.json()
+      setIsAuthenticated(data.authenticated)
+
+      // If not authenticated, load mock data
+      if (!data.authenticated) {
+        setHabits(habitsData.habits)
+      } else {
+        // If authenticated, show nothing for now
+        setHabits([])
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error)
+      setIsAuthenticated(false)
+      // On error, load mock data
+      setHabits(habitsData.habits)
+    }
+  }
 
   const handleCreateHabit = async () => {
     if (!newHabitName.trim()) return

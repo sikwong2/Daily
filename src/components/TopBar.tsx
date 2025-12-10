@@ -40,7 +40,7 @@ export default function TopBar() {
 
       if (response.ok) {
         setIsAuthenticated(false)
-        router.refresh()
+        window.location.reload()
       }
     } catch (error) {
       console.error('Error signing out:', error)
