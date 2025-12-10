@@ -83,17 +83,11 @@ export async function GET(request: Request) {
         if (!acc[completion.habit_id]) {
           acc[completion.habit_id] = []
         }
-        // Convert date string to timestamp (midnight of that day)
-        const date = new Date(completion.completed_date)
-        const timestamp = new Date(
-          date.getFullYear(),
-          date.getMonth(),
-          date.getDate()
-        ).getTime()
-        acc[completion.habit_id].push(timestamp)
+        // Keep date strings as-is (YYYY-MM-DD format)
+        acc[completion.habit_id].push(completion.completed_date)
         return acc
       },
-      {} as Record<string, number[]>
+      {} as Record<string, string[]>
     )
 
     // Transform database format to frontend format
@@ -102,7 +96,7 @@ export async function GET(request: Request) {
       description: habit.description || '',
       color: hexToColorName(habit.color),
       createdDate: new Date(habit.created_at).getTime(),
-      completedDates: (completionsByHabit[habit.id] || []).sort((a, b) => a - b),
+      completedDates: (completionsByHabit[habit.id] || []).sort(), // Sort date strings alphabetically (YYYY-MM-DD)
     }))
 
     return NextResponse.json({ success: true, habits: transformedHabits }, { status: 200 })
@@ -195,8 +189,8 @@ export async function PATCH(request: Request) {
 
       const habitId = habits.id
 
-      // Convert timestamp to date (YYYY-MM-DD format)
-      const completedDate = new Date(date).toISOString().split('T')[0]
+      // Date is already in YYYY-MM-DD format from frontend
+      const completedDate = date
 
       // Check if completion already exists
       const { data: existingCompletion, error: checkError } = await supabaseAdmin
@@ -269,8 +263,8 @@ export async function PATCH(request: Request) {
       } else {
         // Add the date
         habit.completedDates.push(date)
-        // Sort the dates
-        habit.completedDates.sort((a: number, b: number) => a - b)
+        // Sort the dates (date strings sort alphabetically in YYYY-MM-DD format)
+        habit.completedDates.sort()
       }
 
       // Write back to the file

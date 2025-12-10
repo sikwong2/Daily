@@ -17,7 +17,7 @@ interface Habit {
   description: string
   color: string
   createdDate: number
-  completedDates: number[]
+  completedDates: string[] // Date strings in YYYY-MM-DD format
 }
 
 export default function Home() {
@@ -100,19 +100,22 @@ export default function Home() {
     // Close mobile sidebar when habit is clicked
     setIsMobileSidebarOpen(false)
 
-    // Get current date at start of day (midnight) in epoch milliseconds
+    // Get current date in YYYY-MM-DD format (user's local timezone)
     const now = new Date()
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const todayDateString = `${year}-${month}-${day}`
 
     // Optimistically update state first for instant UI feedback
     setHabits(prev => prev.map(habit => {
       if (habit.name === habitName) {
-        const isCompleted = habit.completedDates.includes(todayStart)
+        const isCompleted = habit.completedDates.includes(todayDateString)
         return {
           ...habit,
           completedDates: isCompleted
-            ? habit.completedDates.filter(date => date !== todayStart)
-            : [...habit.completedDates, todayStart]
+            ? habit.completedDates.filter(date => date !== todayDateString)
+            : [...habit.completedDates, todayDateString]
         }
       }
       return habit
@@ -122,19 +125,19 @@ export default function Home() {
     const response = await fetch('/api/habits', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitName, date: todayStart })
+      body: JSON.stringify({ habitName, date: todayDateString })
     })
 
     // If API call fails, revert the optimistic update
     if (!response.ok) {
       setHabits(prev => prev.map(habit => {
         if (habit.name === habitName) {
-          const isCompleted = habit.completedDates.includes(todayStart)
+          const isCompleted = habit.completedDates.includes(todayDateString)
           return {
             ...habit,
             completedDates: isCompleted
-              ? habit.completedDates.filter(date => date !== todayStart)
-              : [...habit.completedDates, todayStart]
+              ? habit.completedDates.filter(date => date !== todayDateString)
+              : [...habit.completedDates, todayDateString]
           }
         }
         return habit

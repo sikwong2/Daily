@@ -8,7 +8,7 @@ interface Habit {
   description: string
   color: string
   createdDate: number
-  completedDates: number[]
+  completedDates: string[] // Date strings in YYYY-MM-DD format
 }
 
 interface CalendarViewProps {
@@ -65,18 +65,14 @@ function CalendarView({ currentDate, habits, onPreviousMonth, onNextMonth }: Cal
 
   // Helper function to get habits completed on a specific day
   const getHabitsForDay = (day: number) => {
-    const dayDate = new Date(year, month, day)
-    // Set to start of day for comparison
-    dayDate.setHours(0, 0, 0, 0)
-    const dayTimestamp = dayDate.getTime()
+    // Create date string in YYYY-MM-DD format for this day
+    const monthStr = String(month + 1).padStart(2, '0')
+    const dayStr = String(day).padStart(2, '0')
+    const dateString = `${year}-${monthStr}-${dayStr}`
 
     // Check each habit to see if it was completed on this day
     return habits.filter(habit => {
-      return habit.completedDates.some(timestamp => {
-        const completedDate = new Date(timestamp)
-        completedDate.setHours(0, 0, 0, 0)
-        return completedDate.getTime() === dayTimestamp
-      })
+      return habit.completedDates.includes(dateString)
     })
   }
 
