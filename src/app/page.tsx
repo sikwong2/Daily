@@ -30,6 +30,7 @@ export default function Home() {
   const [newHabitDescription, setNewHabitDescription] = useState('')
   const [newHabitColor, setNewHabitColor] = useState('blue')
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   useEffect(() => {
     // Set the current date only on the client after hydration
@@ -96,6 +97,9 @@ export default function Home() {
   }
 
   const handleHabitClick = async (habitName: string) => {
+    // Close mobile sidebar when habit is clicked
+    setIsMobileSidebarOpen(false)
+
     // Get current date at start of day (midnight) in epoch milliseconds
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
@@ -178,10 +182,22 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen w-full bg-background">
-      <TopBar />
+      <TopBar
+        isMobileSidebarOpen={isMobileSidebarOpen}
+        onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+      />
+
+      {/* Mobile backdrop overlay */}
+      {isMobileSidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
       <div className="flex flex-1 overflow-hidden">
-        {/* Habit List - 1/3 width */}
-        <div className="w-1/3 border-r border-border p-4 overflow-y-auto bg-muted/30 relative z-0">
+        {/* Habit List - Sidebar */}
+        <div className={`fixed md:relative inset-y-0 left-0 z-40 w-4/5 md:w-1/3 border-r border-border p-4 overflow-y-auto bg-background transition-transform duration-300 ease-in-out ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="flex items-center justify-center gap-2 mb-4">
             <h2 className="text-xl font-semibold">Habits</h2>
             {isAuthenticated && (
@@ -260,8 +276,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Calendar - 2/3 width */}
-        <div className="w-2/3 p-8 overflow-y-auto">
+        {/* Calendar - Full width on mobile, 2/3 width on desktop */}
+        <div className="w-full md:w-2/3 p-4 md:p-8 overflow-y-auto flex flex-col">
           {currentDate && (
             <CalendarView
               habits={habits}

@@ -1,12 +1,17 @@
 'use client'
 
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Sun, Menu, X } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function TopBar() {
+interface TopBarProps {
+  isMobileSidebarOpen?: boolean
+  onToggleSidebar?: () => void
+}
+
+export default function TopBar({ isMobileSidebarOpen = false, onToggleSidebar }: TopBarProps) {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -50,10 +55,17 @@ export default function TopBar() {
   if (!mounted) {
     return (
       <div className="w-full border-b border-border bg-background">
-        <div className="flex h-14 items-center justify-end px-6 gap-2">
-          <Button variant="ghost" size="icon" disabled>
-            <div className="h-5 w-5" />
-          </Button>
+        <div className="flex h-14 items-center justify-between px-6 gap-2">
+          <div className="md:hidden">
+            <Button variant="ghost" size="icon" disabled>
+              <div className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" disabled>
+              <div className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
     )
@@ -61,7 +73,22 @@ export default function TopBar() {
 
   return (
     <div className="w-full border-b border-border bg-background">
-      <div className="flex h-14 items-center justify-end px-6 gap-2">
+      <div className="flex h-14 items-center justify-between px-6 gap-2">
+        {/* Mobile menu button on the left */}
+        {onToggleSidebar && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={onToggleSidebar}
+            aria-label="Toggle menu"
+          >
+            {isMobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        )}
+
+        {/* Right side buttons */}
+        <div className="flex items-center gap-2 ml-auto">
         <Button
           variant="ghost"
           size="icon"
@@ -88,6 +115,7 @@ export default function TopBar() {
             </Button>
           </>
         )}
+        </div>
       </div>
     </div>
   )

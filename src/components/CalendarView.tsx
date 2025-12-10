@@ -81,17 +81,17 @@ function CalendarView({ currentDate, habits, onPreviousMonth, onNextMonth }: Cal
   }
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-evenly gap-4 mb-6">
+    <div className="w-full h-full flex flex-col">
+      <div className="flex items-center justify-evenly gap-2 md:gap-4 mb-4 md:mb-6 flex-shrink-0">
         <Button
           onClick={onPreviousMonth}
           variant="outline"
           size="lg"
         >
           <ChevronLeft className="h-4 w-4" />
-          Previous
+          <span className="hidden sm:inline">Previous</span>
         </Button>
-        <h2 className="text-2xl font-semibold">
+        <h2 className="text-xl md:text-2xl font-semibold">
           {monthNames[month]} {year}
         </h2>
         <Button
@@ -99,22 +99,23 @@ function CalendarView({ currentDate, habits, onPreviousMonth, onNextMonth }: Cal
           variant="outline"
           size="lg"
         >
-          Next
+          <span className="hidden sm:inline">Next</span>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Day names header */}
-      <div className="grid grid-cols-7 gap-2 mb-2">
+      <div className="grid grid-cols-7 gap-1 md:gap-2 mb-1 md:mb-2 flex-shrink-0">
         {dayNames.map(day => (
-          <div key={day} className="text-center font-semibold text-sm text-gray-600 py-2">
+          <div key={day} className="text-center font-semibold text-xs md:text-sm text-gray-600 py-1 md:py-2">
             {day}
           </div>
         ))}
       </div>
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 md:gap-2 flex-1"
+        style={{ gridAutoRows: '1fr' }}>
         {days.map((day, index) => {
           const completedHabits = day ? getHabitsForDay(day) : []
 
@@ -122,20 +123,20 @@ function CalendarView({ currentDate, habits, onPreviousMonth, onNextMonth }: Cal
             <div
               key={index}
               className={`
-                aspect-square flex flex-col p-2 rounded-lg border transition-colors
+                flex flex-col p-1 md:p-2 rounded-lg border transition-colors min-h-0
                 ${day ? 'border-border hover:border-primary/50 cursor-pointer bg-card' : 'border-transparent'}
               `}
             >
               {day && (
                 <>
-                  <span className="text-sm font-semibold mb-1">{day}</span>
-                  <div className="flex flex-col gap-0.5 text-xs overflow-hidden">
+                  <span className="text-xs md:text-sm font-semibold mb-0.5 md:mb-1 flex-shrink-0">{day}</span>
+                  <div className="flex flex-col gap-0.5 text-[10px] md:text-xs overflow-hidden min-h-0">
                     {completedHabits.map((habit, idx) => {
                       const colorClass = colorClasses[habit.color] || colorClasses.blue
                       return (
                         <div
                           key={idx}
-                          className={`${colorClass} px-1 py-0.5 rounded truncate`}
+                          className={`${colorClass} px-1 py-0.5 rounded truncate flex-shrink-0`}
                           title={habit.name}
                         >
                           {habit.name}
