@@ -29,9 +29,9 @@ export async function POST(request: Request) {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Insert user into SQLite database
+    // Insert user into database
     try {
-      const user = dbOps.users.create(email, hashedPassword)
+      const user = await dbOps.users.create(email, hashedPassword)
 
       // Set cookie with public_id
       const cookieStore = await cookies()
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       console.error('Database error:', error)
 
       // Check for unique constraint violation (duplicate email)
-      if (error.message?.includes('UNIQUE constraint failed')) {
+      if (error.message?.includes('UNIQUE constraint failed') || error.message?.includes('unique')) {
         return NextResponse.json(
           { success: false, error: 'Email already exists' },
           { status: 400 }

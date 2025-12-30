@@ -48,11 +48,11 @@ export async function GET(request: Request) {
     }
 
     // Fetch user's habits from database
-    const habits = dbOps.habits.findByUserId(userId)
+    const habits = await dbOps.habits.findByUserId(userId)
 
     // Fetch all completions for this user's habits
     const habitIds = habits.map((h) => h.id)
-    const completions = dbOps.completions.findByHabitIds(habitIds)
+    const completions = await dbOps.completions.findByHabitIds(habitIds)
 
     // Group completions by habit_id
     const completionsByHabit = (completions || []).reduce(
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
     if (userId) {
       // User is authenticated - save to database
       try {
-        const data = dbOps.habits.create(
+        const data = await dbOps.habits.create(
           userId,
           newHabit.name,
           newHabit.description || null,
@@ -143,7 +143,7 @@ export async function PATCH(request: Request) {
     if (userId) {
       // User is authenticated - save to database
       // First, find the habit by name and user_id
-      const habit = dbOps.habits.findByNameAndUserId(habitName, userId)
+      const habit = await dbOps.habits.findByNameAndUserId(habitName, userId)
 
       if (!habit) {
         return NextResponse.json(
@@ -158,15 +158,15 @@ export async function PATCH(request: Request) {
       const completedDate = date
 
       // Check if completion already exists
-      const existingCompletion = dbOps.completions.findOne(habitId, completedDate)
+      const existingCompletion = await dbOps.completions.findOne(habitId, completedDate)
 
       try {
         if (existingCompletion) {
           // Completion exists - remove it (uncomplete)
-          dbOps.completions.delete(existingCompletion.id)
+          await dbOps.completions.delete(existingCompletion.id)
         } else {
           // Completion doesn't exist - add it (complete)
-          dbOps.completions.create(habitId, completedDate)
+          await dbOps.completions.create(habitId, completedDate)
         }
 
         return NextResponse.json({ success: true }, { status: 200 })
@@ -223,7 +223,7 @@ export async function DELETE(request: Request) {
     if (userId) {
       // User is authenticated - delete from database
       // First, find the habit by name and user_id
-      const habit = dbOps.habits.findByNameAndUserId(habitName, userId)
+      const habit = await dbOps.habits.findByNameAndUserId(habitName, userId)
 
       if (!habit) {
         return NextResponse.json(
@@ -236,10 +236,10 @@ export async function DELETE(request: Request) {
 
       try {
         // Delete all completions for this habit (cascades automatically, but being explicit)
-        dbOps.completions.deleteByHabitId(habitId)
+        await dbOps.completions.deleteByHabitId(habitId)
 
         // Delete the habit itself
-        dbOps.habits.delete(habitId)
+        await dbOps.habits.delete(habitId)
 
         return NextResponse.json({ success: true }, { status: 200 })
       } catch (error: any) {

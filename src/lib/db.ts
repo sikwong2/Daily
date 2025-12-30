@@ -1,17 +1,22 @@
-import { Database } from 'bun:sqlite'
-import path from 'path'
+import { createClient } from '@libsql/client'
 
-// Create SQLite database connection
-const dbPath = path.join(process.cwd(), 'database.sqlite')
-export const db = new Database(dbPath, { create: true })
+// Create Turso database connection
+const tursoUrl = process.env.TURSO_DATABASE_URL
+const tursoAuthToken = process.env.TURSO_AUTH_TOKEN
 
-// Enable foreign keys
-db.run('PRAGMA foreign_keys = ON')
+if (!tursoUrl || !tursoAuthToken) {
+  throw new Error('Missing Turso environment variables. Please set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.')
+}
+
+export const db = createClient({
+  url: tursoUrl,
+  authToken: tursoAuthToken,
+})
 
 // Initialize database schema
-export function initializeDatabase() {
+export async function initializeDatabase() {
   // Create users table
-  db.run(`
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT UNIQUE NOT NULL,
@@ -22,7 +27,7 @@ export function initializeDatabase() {
   `)
 
   // Create habits table
-  db.run(`
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS habits (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -36,7 +41,7 @@ export function initializeDatabase() {
   `)
 
   // Create habit_completions table
-  db.run(`
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS habit_completions (
       id TEXT PRIMARY KEY,
       habit_id TEXT NOT NULL,
@@ -48,13 +53,10 @@ export function initializeDatabase() {
   `)
 
   // Create indexes for better performance
-  db.run('CREATE INDEX IF NOT EXISTS idx_habits_user_id ON habits(user_id)')
-  db.run('CREATE INDEX IF NOT EXISTS idx_completions_habit_id ON habit_completions(habit_id)')
-  db.run('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)')
+  await db.execute('CREATE INDEX IF NOT EXISTS idx_habits_user_id ON habits(user_id)')
+  await db.execute('CREATE INDEX IF NOT EXISTS idx_completions_habit_id ON habit_completions(habit_id)')
+  await db.execute('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)')
 }
-
-// Initialize the database when this module is imported
-initializeDatabase()
 
 // Helper function to generate UUIDs
 function generateUUID(): string {
@@ -65,36 +67,32 @@ function generateUUID(): string {
 export const dbOps = {
   // User operations
   users: {
-    create: (email: string, hashedPassword: string) => {
+    create: async (email: string, hashedPassword: string) => {
       const publicId = generateUUID()
-      const stmt = db.prepare(`
-        INSERT INTO users (email, hashed_password, public_id)
-        VALUES (?, ?, ?)
-      `)
-      stmt.run(email, hashedPassword, publicId)
+      await db.execute({
+        sql: 'INSERT INTO users (email, hashed_password, public_id) VALUES (?, ?, ?)',
+        args: [email, hashedPassword, publicId],
+      })
       return { public_id: publicId }
     },
 
-    findByEmail: (email: string) => {
-      const stmt = db.prepare(`
-        SELECT public_id, email, hashed_password
-        FROM users
-        WHERE email = ?
-      `)
-      return stmt.get(email) as { public_id: string; email: string; hashed_password: string } | undefined
+    findByEmail: async (email: string) => {
+      const result = await db.execute({
+        sql: 'SELECT public_id, email, hashed_password FROM users WHERE email = ?',
+        args: [email],
+      })
+      return result.rows[0] as { public_id: string; email: string; hashed_password: string } | undefined
     }
   },
 
   // Habit operations
   habits: {
-    findByUserId: (userId: string) => {
-      const stmt = db.prepare(`
-        SELECT id, user_id, name, description, color, created_at, updated_at
-        FROM habits
-        WHERE user_id = ?
-        ORDER BY created_at ASC
-      `)
-      return stmt.all(userId) as Array<{
+    findByUserId: async (userId: string) => {
+      const result = await db.execute({
+        sql: 'SELECT id, user_id, name, description, color, created_at, updated_at FROM habits WHERE user_id = ? ORDER BY created_at ASC',
+        args: [userId],
+      })
+      return result.rows as Array<{
         id: string
         user_id: string
         name: string
@@ -105,68 +103,71 @@ export const dbOps = {
       }>
     },
 
-    create: (userId: string, name: string, description: string | null, color: string) => {
+    create: async (userId: string, name: string, description: string | null, color: string) => {
       const id = generateUUID()
-      const stmt = db.prepare(`
-        INSERT INTO habits (id, user_id, name, description, color)
-        VALUES (?, ?, ?, ?, ?)
-      `)
-      stmt.run(id, userId, name, description, color)
+      await db.execute({
+        sql: 'INSERT INTO habits (id, user_id, name, description, color) VALUES (?, ?, ?, ?, ?)',
+        args: [id, userId, name, description, color],
+      })
       return { id, user_id: userId, name, description, color, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     },
 
-    findByNameAndUserId: (name: string, userId: string) => {
-      const stmt = db.prepare(`
-        SELECT id FROM habits
-        WHERE name = ? AND user_id = ?
-      `)
-      return stmt.get(name, userId) as { id: string } | undefined
+    findByNameAndUserId: async (name: string, userId: string) => {
+      const result = await db.execute({
+        sql: 'SELECT id FROM habits WHERE name = ? AND user_id = ?',
+        args: [name, userId],
+      })
+      return result.rows[0] as { id: string } | undefined
     },
 
-    delete: (id: string) => {
-      const stmt = db.prepare('DELETE FROM habits WHERE id = ?')
-      stmt.run(id)
+    delete: async (id: string) => {
+      await db.execute({
+        sql: 'DELETE FROM habits WHERE id = ?',
+        args: [id],
+      })
     }
   },
 
   // Habit completion operations
   completions: {
-    findByHabitIds: (habitIds: string[]) => {
+    findByHabitIds: async (habitIds: string[]) => {
       if (habitIds.length === 0) return []
       const placeholders = habitIds.map(() => '?').join(',')
-      const stmt = db.prepare(`
-        SELECT habit_id, completed_date
-        FROM habit_completions
-        WHERE habit_id IN (${placeholders})
-      `)
-      return stmt.all(...habitIds) as Array<{ habit_id: string; completed_date: string }>
+      const result = await db.execute({
+        sql: `SELECT habit_id, completed_date FROM habit_completions WHERE habit_id IN (${placeholders})`,
+        args: habitIds,
+      })
+      return result.rows as Array<{ habit_id: string; completed_date: string }>
     },
 
-    findOne: (habitId: string, completedDate: string) => {
-      const stmt = db.prepare(`
-        SELECT id FROM habit_completions
-        WHERE habit_id = ? AND completed_date = ?
-      `)
-      return stmt.get(habitId, completedDate) as { id: string } | undefined
+    findOne: async (habitId: string, completedDate: string) => {
+      const result = await db.execute({
+        sql: 'SELECT id FROM habit_completions WHERE habit_id = ? AND completed_date = ?',
+        args: [habitId, completedDate],
+      })
+      return result.rows[0] as { id: string } | undefined
     },
 
-    create: (habitId: string, completedDate: string) => {
+    create: async (habitId: string, completedDate: string) => {
       const id = generateUUID()
-      const stmt = db.prepare(`
-        INSERT INTO habit_completions (id, habit_id, completed_date)
-        VALUES (?, ?, ?)
-      `)
-      stmt.run(id, habitId, completedDate)
+      await db.execute({
+        sql: 'INSERT INTO habit_completions (id, habit_id, completed_date) VALUES (?, ?, ?)',
+        args: [id, habitId, completedDate],
+      })
     },
 
-    delete: (id: string) => {
-      const stmt = db.prepare('DELETE FROM habit_completions WHERE id = ?')
-      stmt.run(id)
+    delete: async (id: string) => {
+      await db.execute({
+        sql: 'DELETE FROM habit_completions WHERE id = ?',
+        args: [id],
+      })
     },
 
-    deleteByHabitId: (habitId: string) => {
-      const stmt = db.prepare('DELETE FROM habit_completions WHERE habit_id = ?')
-      stmt.run(habitId)
+    deleteByHabitId: async (habitId: string) => {
+      await db.execute({
+        sql: 'DELETE FROM habit_completions WHERE habit_id = ?',
+        args: [habitId],
+      })
     }
   }
 }
