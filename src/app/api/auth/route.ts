@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
-import { supabaseAdmin } from '@/lib/supabase'
+import { dbOps } from '@/lib/db'
 
 const createUserSchema = z.object({
   email: z.email('Invalid email format'),
@@ -29,34 +29,34 @@ export async function POST(request: Request) {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Insert user into Supabase database using admin client (bypasses RLS)
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .insert([
-        {
-          email,
-          hashed_password: hashedPassword,
-        },
-      ])
-      .select('public_id')
-      .single()
+    // Insert user into SQLite database
+    try {
+      const user = dbOps.users.create(email, hashedPassword)
 
-    if (error || !data) {
-      console.error('Supabase error:', error)
+      // Set cookie with public_id
+      const cookieStore = await cookies()
+      cookieStore.set('userId', user.public_id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      })
+    } catch (error: any) {
+      console.error('Database error:', error)
+
+      // Check for unique constraint violation (duplicate email)
+      if (error.message?.includes('UNIQUE constraint failed')) {
+        return NextResponse.json(
+          { success: false, error: 'Email already exists' },
+          { status: 400 }
+        )
+      }
+
       return NextResponse.json(
-        { success: false, error: error?.message || 'Failed to create user' },
+        { success: false, error: 'Failed to create user' },
         { status: 500 }
       )
     }
-
-    // Set cookie with public_id
-    const cookieStore = await cookies()
-    cookieStore.set('userId', data.public_id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    })
 
     return NextResponse.json(
       { success: true, message: 'User created successfully' },

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
-import { supabaseAdmin } from '@/lib/supabase'
+import { dbOps } from '@/lib/db'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -25,13 +25,9 @@ export async function POST(request: Request) {
 
     const { email, password } = result.data
 
-    const { data: user, error } = await supabaseAdmin
-      .from('users')
-      .select('public_id, email, hashed_password')
-      .eq('email', email)
-      .single()
+    const user = dbOps.users.findByEmail(email)
 
-    if (error || !user) {
+    if (!user) {
       return NextResponse.json(
         { success: false, error: 'Invalid email or password' },
         { status: 401 }

@@ -16,3 +16,8 @@ dist
 
 .next
 .env
+
+# SQLite database
+database.sqlite
+database.sqlite-shm
+database.sqlite-wal

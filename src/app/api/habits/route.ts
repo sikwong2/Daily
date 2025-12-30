@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { cookies } from 'next/headers'
-import { supabaseAdmin } from '@/lib/supabase'
+import { dbOps } from '@/lib/db'
 
 // Helper to convert color names to hex codes
 function colorNameToHex(colorName: string): string {
@@ -47,35 +47,12 @@ export async function GET(request: Request) {
       )
     }
 
-    // Fetch user's habits from Supabase
-    const { data: habits, error } = await supabaseAdmin
-      .from('habits')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: true })
-
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { success: false, error: error.message || 'Failed to fetch habits' },
-        { status: 500 }
-      )
-    }
+    // Fetch user's habits from database
+    const habits = dbOps.habits.findByUserId(userId)
 
     // Fetch all completions for this user's habits
     const habitIds = habits.map((h) => h.id)
-    const { data: completions, error: completionsError } = await supabaseAdmin
-      .from('habit_completions')
-      .select('habit_id, completed_date')
-      .in('habit_id', habitIds)
-
-    if (completionsError) {
-      console.error('Error fetching completions:', completionsError)
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch habit completions' },
-        { status: 500 }
-      )
-    }
+    const completions = dbOps.completions.findByHabitIds(habitIds)
 
     // Group completions by habit_id
     const completionsByHabit = (completions || []).reduce(
@@ -118,29 +95,23 @@ export async function POST(request: Request) {
     const userId = cookieStore.get('userId')?.value
 
     if (userId) {
-      // User is authenticated - save to Supabase database
-      const { data, error } = await supabaseAdmin
-        .from('habits')
-        .insert([
-          {
-            user_id: userId,
-            name: newHabit.name,
-            description: newHabit.description || null,
-            color: colorNameToHex(newHabit.color),
-          },
-        ])
-        .select()
-        .single()
+      // User is authenticated - save to database
+      try {
+        const data = dbOps.habits.create(
+          userId,
+          newHabit.name,
+          newHabit.description || null,
+          colorNameToHex(newHabit.color)
+        )
 
-      if (error) {
-        console.error('Supabase error:', error)
+        return NextResponse.json({ success: true, data }, { status: 200 })
+      } catch (error: any) {
+        console.error('Database error:', error)
         return NextResponse.json(
-          { success: false, error: error.message || 'Failed to create habit' },
+          { success: false, error: 'Failed to create habit' },
           { status: 500 }
         )
       }
-
-      return NextResponse.json({ success: true, data }, { status: 200 })
     } else {
       // User is not authenticated - save to JSON file (mock data)
       const filePath = path.join(process.cwd(), 'src/data/habits.json')
@@ -170,79 +141,42 @@ export async function PATCH(request: Request) {
     const userId = cookieStore.get('userId')?.value
 
     if (userId) {
-      // User is authenticated - save to Supabase database
+      // User is authenticated - save to database
       // First, find the habit by name and user_id
-      const { data: habits, error: habitError } = await supabaseAdmin
-        .from('habits')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('name', habitName)
-        .single()
+      const habit = dbOps.habits.findByNameAndUserId(habitName, userId)
 
-      if (habitError || !habits) {
-        console.error('Habit not found:', habitError)
+      if (!habit) {
         return NextResponse.json(
           { success: false, error: 'Habit not found' },
           { status: 404 }
         )
       }
 
-      const habitId = habits.id
+      const habitId = habit.id
 
       // Date is already in YYYY-MM-DD format from frontend
       const completedDate = date
 
       // Check if completion already exists
-      const { data: existingCompletion, error: checkError } = await supabaseAdmin
-        .from('habit_completions')
-        .select('id')
-        .eq('habit_id', habitId)
-        .eq('completed_date', completedDate)
-        .maybeSingle()
+      const existingCompletion = dbOps.completions.findOne(habitId, completedDate)
 
-      if (checkError) {
-        console.error('Error checking completion:', checkError)
+      try {
+        if (existingCompletion) {
+          // Completion exists - remove it (uncomplete)
+          dbOps.completions.delete(existingCompletion.id)
+        } else {
+          // Completion doesn't exist - add it (complete)
+          dbOps.completions.create(habitId, completedDate)
+        }
+
+        return NextResponse.json({ success: true }, { status: 200 })
+      } catch (error: any) {
+        console.error('Database error:', error)
         return NextResponse.json(
-          { success: false, error: 'Failed to check completion status' },
+          { success: false, error: 'Failed to update habit' },
           { status: 500 }
         )
       }
-
-      if (existingCompletion) {
-        // Completion exists - remove it (uncomplete)
-        const { error: deleteError } = await supabaseAdmin
-          .from('habit_completions')
-          .delete()
-          .eq('id', existingCompletion.id)
-
-        if (deleteError) {
-          console.error('Error deleting completion:', deleteError)
-          return NextResponse.json(
-            { success: false, error: 'Failed to update habit' },
-            { status: 500 }
-          )
-        }
-      } else {
-        // Completion doesn't exist - add it (complete)
-        const { error: insertError } = await supabaseAdmin
-          .from('habit_completions')
-          .insert([
-            {
-              habit_id: habitId,
-              completed_date: completedDate,
-            },
-          ])
-
-        if (insertError) {
-          console.error('Error inserting completion:', insertError)
-          return NextResponse.json(
-            { success: false, error: 'Failed to update habit' },
-            { status: 500 }
-          )
-        }
-      }
-
-      return NextResponse.json({ success: true }, { status: 200 })
     } else {
       // User is not authenticated - use JSON file (mock data)
       const filePath = path.join(process.cwd(), 'src/data/habits.json')
@@ -287,17 +221,11 @@ export async function DELETE(request: Request) {
     const userId = cookieStore.get('userId')?.value
 
     if (userId) {
-      // User is authenticated - delete from Supabase database
+      // User is authenticated - delete from database
       // First, find the habit by name and user_id
-      const { data: habit, error: habitError } = await supabaseAdmin
-        .from('habits')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('name', habitName)
-        .single()
+      const habit = dbOps.habits.findByNameAndUserId(habitName, userId)
 
-      if (habitError || !habit) {
-        console.error('Habit not found:', habitError)
+      if (!habit) {
         return NextResponse.json(
           { success: false, error: 'Habit not found' },
           { status: 404 }
@@ -306,35 +234,21 @@ export async function DELETE(request: Request) {
 
       const habitId = habit.id
 
-      // Delete all completions for this habit
-      const { error: completionsError } = await supabaseAdmin
-        .from('habit_completions')
-        .delete()
-        .eq('habit_id', habitId)
+      try {
+        // Delete all completions for this habit (cascades automatically, but being explicit)
+        dbOps.completions.deleteByHabitId(habitId)
 
-      if (completionsError) {
-        console.error('Error deleting completions:', completionsError)
-        return NextResponse.json(
-          { success: false, error: 'Failed to delete habit completions' },
-          { status: 500 }
-        )
-      }
+        // Delete the habit itself
+        dbOps.habits.delete(habitId)
 
-      // Delete the habit itself
-      const { error: deleteError } = await supabaseAdmin
-        .from('habits')
-        .delete()
-        .eq('id', habitId)
-
-      if (deleteError) {
-        console.error('Error deleting habit:', deleteError)
+        return NextResponse.json({ success: true }, { status: 200 })
+      } catch (error: any) {
+        console.error('Database error:', error)
         return NextResponse.json(
           { success: false, error: 'Failed to delete habit' },
           { status: 500 }
         )
       }
-
-      return NextResponse.json({ success: true }, { status: 200 })
     } else {
       // User is not authenticated - use JSON file (mock data)
       const filePath = path.join(process.cwd(), 'src/data/habits.json')
