@@ -81,7 +81,7 @@ export const dbOps = {
         sql: 'SELECT public_id, email, hashed_password FROM users WHERE email = ?',
         args: [email],
       })
-      return result.rows[0] as { public_id: string; email: string; hashed_password: string } | undefined
+      return result.rows[0] as any as { public_id: string; email: string; hashed_password: string } | undefined
     }
   },
 
@@ -92,7 +92,7 @@ export const dbOps = {
         sql: 'SELECT id, user_id, name, description, color, created_at, updated_at FROM habits WHERE user_id = ? ORDER BY created_at ASC',
         args: [userId],
       })
-      return result.rows as Array<{
+      return result.rows as any as Array<{
         id: string
         user_id: string
         name: string
@@ -117,7 +117,7 @@ export const dbOps = {
         sql: 'SELECT id FROM habits WHERE name = ? AND user_id = ?',
         args: [name, userId],
       })
-      return result.rows[0] as { id: string } | undefined
+      return result.rows[0] as any as { id: string } | undefined
     },
 
     delete: async (id: string) => {
@@ -137,7 +137,7 @@ export const dbOps = {
         sql: `SELECT habit_id, completed_date FROM habit_completions WHERE habit_id IN (${placeholders})`,
         args: habitIds,
       })
-      return result.rows as Array<{ habit_id: string; completed_date: string }>
+      return result.rows as any as Array<{ habit_id: string; completed_date: string }>
     },
 
     findOne: async (habitId: string, completedDate: string) => {
@@ -145,7 +145,7 @@ export const dbOps = {
         sql: 'SELECT id FROM habit_completions WHERE habit_id = ? AND completed_date = ?',
         args: [habitId, completedDate],
       })
-      return result.rows[0] as { id: string } | undefined
+      return result.rows[0] as any as { id: string } | undefined
     },
 
     create: async (habitId: string, completedDate: string) => {
